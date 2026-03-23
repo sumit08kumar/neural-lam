@@ -94,3 +94,12 @@ sphinx:
       torch:
         - "https://pytorch.org/docs/stable"
         - null
+      xarray:
+        - "https://docs.xarray.dev/en/stable"
+        - null
+      pytorch_lightning:
+        - "https://lightning.ai/docs/pytorch/stable"
+        - null
+      torch_geometric:
+        - "https://pytorch-geometric.readthedocs.io/en/latest"
+        - null

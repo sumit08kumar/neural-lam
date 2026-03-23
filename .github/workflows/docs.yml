@@ -47,7 +47,7 @@ jobs:
         run: |
           pdm run pydocstyle neural_lam/ --convention=numpy --add-ignore=D100,D104,D105 || true
       - name: jupyter-book build
-        run: pdm run jupyter-book build docs/
+        run: pdm run jupyter-book build docs/ --warningiserror
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -81,7 +81,7 @@ jobs:
           pdm venv create --with-pip
           pdm install --group docs --no-default
       - name: jupyter-book build
-        run: pdm run jupyter-book build docs/
+        run: pdm run jupyter-book build docs/ --warningiserror
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:

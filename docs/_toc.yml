@@ -3,6 +3,21 @@ format: jb-book
 root: intro
 
 parts:
+  - caption: Getting Started
+    chapters:
+      - file: installation
+
+  - caption: User Guide
+    chapters:
+      - file: user_guide/data
+      - file: user_guide/graphs
+      - file: user_guide/training
+      - file: user_guide/evaluation
+
   - caption: API Reference
     chapters:
       - file: autoapi/index
+
+  - caption: Contributing
+    chapters:
+      - file: contributing
