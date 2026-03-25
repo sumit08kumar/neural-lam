@@ -1,3 +1,4 @@
+"""Script for computing standardization statistics for MEPS data."""
 # Standard library
 import os
 import subprocess
@@ -18,6 +19,10 @@ from neural_lam.utils import get_integer_time
 
 
 class PaddedWeatherDataset(torch.utils.data.Dataset):
+    """
+    WeatherDataset that pads with zero if out of bounds.
+    Used for computing standardization statistics.
+    """
     def __init__(self, base_dataset, world_size, batch_size):
         super().__init__()
         self.base_dataset = base_dataset
@@ -33,6 +38,7 @@ class PaddedWeatherDataset(torch.utils.data.Dataset):
         )
 
     def __getitem__(self, idx):
+        """Return a single sample from the dataset."""
         return self.base_dataset[
             (
                 self.original_indices[-1]
@@ -42,6 +48,7 @@ class PaddedWeatherDataset(torch.utils.data.Dataset):
         ]
 
     def __len__(self):
+        """Return the number of samples in the dataset."""
         return self.total_samples + self.padded_samples
 
     def get_original_indices(self):
@@ -97,6 +104,24 @@ def setup(rank, world_size):  # pylint: disable=redefined-outer-name
 def save_stats(
     static_dir_path, means, squares, flux_means, flux_squares, filename_prefix
 ):
+    """
+    Save computed statistics to disk.
+
+    Parameters
+    ----------
+    static_dir_path : Path
+        Directory to save the statistics to.
+    means : list of torch.Tensor
+        List of mean values for each batch.
+    squares : list of torch.Tensor
+        List of squared mean values for each batch.
+    flux_means : list of torch.Tensor
+        List of flux mean values for each batch.
+    flux_squares : list of torch.Tensor
+        List of flux squared mean values for each batch.
+    filename_prefix : str
+        Prefix for the saved filenames.
+    """
     means = (
         torch.stack(means) if len(means) > 1 else means[0]
     )  # (N_batch, d_features,)
@@ -378,6 +403,7 @@ def main(
 
 
 def cli():
+    """Command line interface for computing standardization statistics."""
     parser = ArgumentParser(description="Training arguments")
     parser.add_argument(
         "--datastore_config_path",

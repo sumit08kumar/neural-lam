@@ -1,3 +1,4 @@
+"""HiLAM model implementation."""
 # Third-party
 from torch import nn
 

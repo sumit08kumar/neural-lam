@@ -1,3 +1,4 @@
+"""Interaction Network implementation for Neural-LAM."""
 # Third-party
 import torch
 import torch_geometric as pyg

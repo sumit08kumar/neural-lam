@@ -16,6 +16,21 @@ DATASTORES = {
 
 
 def init_datastore(datastore_kind, config_path):
+    """
+    Initialize a datastore of the given kind.
+
+    Parameters
+    ----------
+    datastore_kind : str
+        The kind of datastore to initialize.
+    config_path : str
+        The path to the configuration file for the datastore.
+
+    Returns
+    -------
+    BaseDatastore
+        The initialized datastore.
+    """
     DatastoreClass = DATASTORES.get(datastore_kind)
 
     if DatastoreClass is None:

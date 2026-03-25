@@ -1,3 +1,4 @@
+"""Base class for single-level graph models."""
 # Third-party
 import torch
 

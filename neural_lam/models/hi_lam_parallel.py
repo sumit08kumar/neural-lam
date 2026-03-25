@@ -1,3 +1,4 @@
+"""Parallel HiLAM model implementation."""
 # Third-party
 import torch
 import torch_geometric as pyg

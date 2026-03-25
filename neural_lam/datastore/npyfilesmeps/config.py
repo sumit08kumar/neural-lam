@@ -1,3 +1,4 @@
+"""Configuration for NpyFilesDatastoreMEPS."""
 # Standard library
 from dataclasses import dataclass, field
 from datetime import timedelta

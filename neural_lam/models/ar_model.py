@@ -1,3 +1,4 @@
+"""Autoregressive model implementation."""
 # Standard library
 import os
 import warnings

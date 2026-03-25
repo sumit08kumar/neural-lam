@@ -1,3 +1,4 @@
+"""Custom loggers for Neural-LAM."""
 # Standard library
 import sys
 

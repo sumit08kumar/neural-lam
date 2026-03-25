@@ -89,7 +89,8 @@ def plot_example_from_datastore(
 
 
 if __name__ == "__main__":
-    # Standard library
+    """Plotting examples for datastores."""
+# Standard library
     import argparse
 
     def _parse_dict(arg_str):

@@ -1,3 +1,4 @@
+"""Base class for datastores in Neural-LAM."""
 # Standard library
 import abc
 import collections

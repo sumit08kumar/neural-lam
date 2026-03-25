@@ -1,3 +1,4 @@
+"""Base class for hierarchical graph models."""
 # Third-party
 from torch import nn
 

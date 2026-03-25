@@ -35,6 +35,23 @@ OPEN_WATER_FILENAME_FORMAT = "wtr_{analysis_time:%Y%m%d%H}.npy"
 
 
 def _load_np(fp, add_feature_dim, feature_dim_mask=None):
+    """
+    Load a numpy file and optionally add a feature dimension.
+
+    Parameters
+    ----------
+    fp : str or Path
+        Path to the numpy file.
+    add_feature_dim : bool
+        Whether to add a feature dimension.
+    feature_dim_mask : np.ndarray, optional
+        Mask to apply to the feature dimension.
+
+    Returns
+    -------
+    np.ndarray
+        The loaded array.
+    """
     arr = np.load(fp)
     if add_feature_dim:
         arr = arr[..., np.newaxis]
@@ -44,6 +61,12 @@ def _load_np(fp, add_feature_dim, feature_dim_mask=None):
 
 
 class NpyFilesDatastoreMEPS(BaseRegularGridDatastore):
+    """
+    Datastore for MEPS data stored as .npy files.
+    """
+    """
+    Datastore for MEPS data stored as .npy files.
+    """
     __doc__ = f"""
     Represents a dataset stored as numpy files on disk. The dataset is assumed
     to be stored in a directory structure where each sample is stored in a
@@ -550,6 +573,19 @@ class NpyFilesDatastoreMEPS(BaseRegularGridDatastore):
         return times
 
     def _calc_datetime_forcing_features(self, da_time: xr.DataArray):
+        """
+        Calculate datetime-based forcing features (sin/cos of hour and year).
+
+        Parameters
+        ----------
+        da_time : xr.DataArray
+            DataArray containing the forecast times.
+
+        Returns
+        -------
+        xr.DataArray
+            The calculated forcing features.
+        """
         da_hour_angle = da_time.dt.hour / 12 * np.pi
         da_year_angle = da_time.dt.dayofyear / 365 * 2 * np.pi
 

@@ -1,3 +1,4 @@
+"""GraphLAM model implementation."""
 # Third-party
 import torch_geometric as pyg
 

@@ -34,6 +34,7 @@ class DatastoreSelection:
     kind: str
 
     def __post_init__(self):
+        """Validate the datastore kind."""
         if self.kind not in DATASTORES:
             raise ValueError(f"Datastore kind {self.kind} is not implemented")
 

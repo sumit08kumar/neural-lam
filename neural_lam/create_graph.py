@@ -679,6 +679,14 @@ def create_graph_from_datastore(
 
 
 def cli(input_args=None):
+    """
+    Command line interface for graph generation.
+
+    Parameters
+    ----------
+    input_args : list of str, optional
+        Arguments to parse. If None, uses sys.argv.
+    """
     parser = ArgumentParser(
         description="Graph generation for neural-lam",
         formatter_class=ArgumentDefaultsHelpFormatter,

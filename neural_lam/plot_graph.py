@@ -1,3 +1,4 @@
+"""Plotting utilities for graphs."""
 # Standard library
 import os
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
