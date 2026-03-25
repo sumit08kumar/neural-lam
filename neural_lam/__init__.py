@@ -1,3 +1,4 @@
+"""Neural-LAM: Neural Limited Area Model for weather forecasting."""
 # Standard library
 import importlib.metadata
 

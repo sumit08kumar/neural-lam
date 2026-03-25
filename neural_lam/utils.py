@@ -1,3 +1,4 @@
+"""Utility functions and classes for Neural-LAM."""
 # Standard library
 import os
 import shutil
@@ -35,12 +36,15 @@ class BufferList(nn.Module):
             self.register_buffer(f"b{buffer_i}", tensor, persistent=persistent)
 
     def __getitem__(self, key):
+        """Get the buffer at the given index."""
         return getattr(self, f"b{key}")
 
     def __len__(self):
+        """Return the number of buffers in the list."""
         return self.n_buffers
 
     def __iter__(self):
+        """Iterate over the buffers in the list."""
         return (self[i] for i in range(len(self)))
 
 
@@ -412,26 +416,34 @@ def inverse_sigmoid(x):
 
 def get_integer_time(tdelta) -> tuple[int, str]:
     """
-    Get the largest time unit that can represent the given timedelta as an
-    integer.
+    Get the largest time unit that can represent the given timedelta.
 
-    Returns:
-        int: The integer value of the timedelta in the largest time unit, or
-                1 if no such unit exists.
-        str: The time unit as a string ('weeks', 'days', 'hours', 'minutes',
-                'seconds', 'milliseconds', 'microseconds'). If no unit can
-                represent the timedelta as an integer, returns 'unknown'.
+    Parameters
+    ----------
+    tdelta : datetime.timedelta
+        The timedelta to represent.
 
-    Examples:
-        >>> from datetime import timedelta
-        >>> get_integer_time(timedelta(days=14))
-        (2, 'weeks')
-        >>> get_integer_time(timedelta(hours=5))
-        (5, 'hours')
-        >>> get_integer_time(timedelta(milliseconds=1000))
-        (1, 'seconds')
-        >>> get_integer_time(timedelta(days=0.001))
-        (1, 'unknown')
+    Returns
+    -------
+    int
+        The integer value of the timedelta in the largest time unit, or
+        1 if no such unit exists.
+    str
+        The time unit as a string ('weeks', 'days', 'hours', 'minutes',
+        'seconds', 'milliseconds', 'microseconds'). If no unit can
+        represent the timedelta as an integer, returns 'unknown'.
+
+    Examples
+    --------
+    >>> from datetime import timedelta
+    >>> get_integer_time(timedelta(days=14))
+    (2, 'weeks')
+    >>> get_integer_time(timedelta(hours=5))
+    (5, 'hours')
+    >>> get_integer_time(timedelta(milliseconds=1000))
+    (1, 'seconds')
+    >>> get_integer_time(timedelta(days=0.001))
+    (1, 'unknown')
     """
     total_seconds = tdelta.total_seconds()
 

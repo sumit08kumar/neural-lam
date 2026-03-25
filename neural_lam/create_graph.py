@@ -1,3 +1,4 @@
+"""Graph generation for neural-lam."""
 # Standard library
 import os
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
@@ -19,6 +20,21 @@ from .datastore.base import BaseRegularGridDatastore
 
 
 def plot_graph(graph, title=None):
+    """
+    Plot a graph and its node degrees.
+
+    Parameters
+    ----------
+    graph : pyg.data.Data
+        The graph to plot.
+    title : str, optional
+        A title for the plot.
+
+    Returns
+    -------
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The created figure and axis.
+    """
     fig, axis = plt.subplots(figsize=(8, 8), dpi=200)  # W,H
     edge_index = graph.edge_index
     pos = graph.pos
@@ -70,6 +86,22 @@ def plot_graph(graph, title=None):
 
 
 def sort_nodes_internally(nx_graph):
+    """
+    Sort nodes internally in a networkx graph.
+
+    This ensures that the .nodes() return list is sorted, which is important
+    for PyG conversion.
+
+    Parameters
+    ----------
+    nx_graph : networkx.Graph
+        The graph to sort.
+
+    Returns
+    -------
+    networkx.Graph
+        The sorted graph.
+    """
     # For some reason the networkx .nodes() return list can not be sorted,
     # but this is the ordering used by pyg when converting.
     # This function fixes this.
@@ -80,6 +112,18 @@ def sort_nodes_internally(nx_graph):
 
 
 def save_edges(graph, name, base_path):
+    """
+    Save graph edges and features to disk.
+
+    Parameters
+    ----------
+    graph : pyg.data.Data
+        The graph to save.
+    name : str
+        Base name for the saved files.
+    base_path : str
+        Directory to save the files in.
+    """
     torch.save(
         graph.edge_index, os.path.join(base_path, f"{name}_edge_index.pt")
     )
@@ -90,6 +134,18 @@ def save_edges(graph, name, base_path):
 
 
 def save_edges_list(graphs, name, base_path):
+    """
+    Save a list of graph edges and features to disk.
+
+    Parameters
+    ----------
+    graphs : list of pyg.data.Data
+        The list of graphs to save.
+    name : str
+        Base name for the saved files.
+    base_path : str
+        Directory to save the files in.
+    """
     torch.save(
         [graph.edge_index for graph in graphs],
         os.path.join(base_path, f"{name}_edge_index.pt"),
@@ -104,12 +160,44 @@ def save_edges_list(graphs, name, base_path):
 
 
 def from_networkx_with_start_index(nx_graph, start_index):
+    """
+    Convert a networkx graph to PyG and offset the edge indices.
+
+    Parameters
+    ----------
+    nx_graph : networkx.Graph
+        The networkx graph to convert.
+    start_index : int
+        The index to add to all edge indices.
+
+    Returns
+    -------
+    pyg.data.Data
+        The converted PyG graph.
+    """
     pyg_graph = from_networkx(nx_graph)
     pyg_graph.edge_index += start_index
     return pyg_graph
 
 
 def mk_2d_graph(xy, nx, ny):
+    """
+    Create a 2D grid graph with diagonal edges.
+
+    Parameters
+    ----------
+    xy : np.ndarray
+        Grid coordinates, shape (Nx, Ny, 2).
+    nx : int
+        Number of nodes in x-direction.
+    ny : int
+        Number of nodes in y-direction.
+
+    Returns
+    -------
+    networkx.DiGraph
+        The created directed graph.
+    """
     xm, xM = np.amin(xy[:, :, 0][:, 0]), np.amax(xy[:, :, 0][:, 0])
     ym, yM = np.amin(xy[:, :, 1][0, :]), np.amax(xy[:, :, 1][0, :])
 
@@ -149,6 +237,21 @@ def mk_2d_graph(xy, nx, ny):
 
 
 def prepend_node_index(graph, new_index):
+    """
+    Relabel node indices in a graph by prepending a level index.
+
+    Parameters
+    ----------
+    graph : networkx.Graph
+        The graph to relabel.
+    new_index : int
+        The level index to prepend.
+
+    Returns
+    -------
+    networkx.Graph
+        The relabeled graph.
+    """
     # Relabel node indices in graph, insert (graph_level, i, j)
     ijk = [tuple((new_index,) + x) for x in graph.nodes]
     to_mapping = dict(zip(graph.nodes, ijk))
@@ -543,6 +646,22 @@ def create_graph_from_datastore(
     hierarchical: bool = False,
     create_plot: bool = False,
 ):
+    """
+    Create graph components using metadata from a datastore.
+
+    Parameters
+    ----------
+    datastore : BaseRegularGridDatastore
+        The datastore providing grid coordinates.
+    output_root_path : str
+        Path to store the graph components.
+    n_max_levels : int, optional
+        Limit multi-scale mesh to given number of levels.
+    hierarchical : bool, optional
+        Whether to generate a hierarchical mesh graph.
+    create_plot : bool, optional
+        Whether to plot graphs during generation.
+    """
     if isinstance(datastore, BaseRegularGridDatastore):
         xy = datastore.get_xy(category="state", stacked=False)
     else:

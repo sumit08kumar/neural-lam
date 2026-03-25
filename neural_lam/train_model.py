@@ -1,3 +1,4 @@
+"""Training and evaluation script for Neural-LAM models."""
 # Standard library
 import json
 import random
@@ -26,7 +27,14 @@ MODELS = {
 
 @logger.catch
 def main(input_args=None):
-    """Main function for training and evaluating models."""
+    """
+    Main entry point for training and evaluating models.
+
+    Parameters
+    ----------
+    input_args : list of str, optional
+        Arguments to parse. If None, uses sys.argv.
+    """
     parser = ArgumentParser(
         description="Train or evaluate MLWP models for LAM",
         formatter_class=ArgumentDefaultsHelpFormatter,

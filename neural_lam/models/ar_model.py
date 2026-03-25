@@ -36,6 +36,18 @@ class ARModel(pl.LightningModule):
         config: NeuralLAMConfig,
         datastore: BaseDatastore,
     ):
+        """
+        Initialize the ARModel.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            Command line arguments containing model and training hyperparameters.
+        config : NeuralLAMConfig
+            Configuration object for the Neural-LAM model.
+        datastore : BaseDatastore
+            The datastore used to load data and metadata.
+        """
         super().__init__()
         self.save_hyperparameters(ignore=["datastore"])
         self.args = args
@@ -168,25 +180,25 @@ class ARModel(pl.LightningModule):
         category: str,
     ) -> xr.DataArray:
         """
-        Create an `xr.DataArray` from a tensor, with the correct dimensions and
-        coordinates to match the datastore used by the model. This function in
-        in effect is the inverse of what is returned by
-        `WeatherDataset.__getitem__`.
+        Create an `xr.DataArray` from a tensor with matching dimensions.
+
+        This is effectively the inverse of `WeatherDataset.__getitem__`.
 
         Parameters
         ----------
         tensor : torch.Tensor
-            The tensor to convert to a `xr.DataArray` with dimensions [time,
-            grid_index, feature]. The tensor will be copied to the CPU if it is
-            not already there.
+            The tensor to convert, shape (time, grid_index, feature).
         time : torch.Tensor
-            The time index or indices for the data, given as tensor representing
-            epoch time in nanoseconds. The tensor will be
-            copied to the CPU memory if they are not already there.
+            The time indices for the data as epoch time in nanoseconds.
         split : str
-            The split of the data, either 'train', 'val', or 'test'
+            The data split ('train', 'val', or 'test').
         category : str
-            The category of the data, either 'state' or 'forcing'
+            The data category ('state' or 'forcing').
+
+        Returns
+        -------
+        xr.DataArray
+            The constructed DataArray.
         """
         # TODO: creating an instance of WeatherDataset here on every call is
         # not how this should be done but whether WeatherDataset should be
@@ -199,6 +211,14 @@ class ARModel(pl.LightningModule):
         return da
 
     def configure_optimizers(self):
+        """
+        Configure the optimizers for the model.
+
+        Returns
+        -------
+        torch.optim.Optimizer
+            The AdamW optimizer.
+        """
         opt = torch.optim.AdamW(
             self.parameters(), lr=self.args.lr, betas=(0.9, 0.95)
         )
@@ -220,19 +240,41 @@ class ARModel(pl.LightningModule):
 
     def predict_step(self, prev_state, prev_prev_state, forcing):
         """
-        Step state one step ahead using prediction model, X_{t-1}, X_t -> X_t+1
-        prev_state: (B, num_grid_nodes, feature_dim), X_t prev_prev_state: (B,
-        num_grid_nodes, feature_dim), X_{t-1} forcing: (B, num_grid_nodes,
-        forcing_dim)
+        Predict the next state given the two previous states and forcing.
+
+        Parameters
+        ----------
+        prev_state : torch.Tensor
+            State at time t, shape (B, num_grid_nodes, feature_dim).
+        prev_prev_state : torch.Tensor
+            State at time t-1, shape (B, num_grid_nodes, feature_dim).
+        forcing : torch.Tensor
+            Forcing inputs at time t, shape (B, num_grid_nodes, forcing_dim).
+
+        Returns
+        -------
+        tuple of torch.Tensor
+            (predicted_state, predicted_std) where predicted_std may be None.
         """
         raise NotImplementedError("No prediction step implemented")
 
     def unroll_prediction(self, init_states, forcing_features, true_states):
         """
-        Roll out prediction taking multiple autoregressive steps with model
-        init_states: (B, 2, num_grid_nodes, d_f) forcing_features: (B,
-        pred_steps, num_grid_nodes, d_static_f) true_states: (B, pred_steps,
-        num_grid_nodes, d_f)
+        Perform multiple autoregressive steps to roll out a prediction.
+
+        Parameters
+        ----------
+        init_states : torch.Tensor
+            Initial states for the rollout, shape (B, 2, num_grid_nodes, d_f).
+        forcing_features : torch.Tensor
+            Forcing features for each step, shape (B, pred_steps, num_grid_nodes, d_forcing).
+        true_states : torch.Tensor
+            Ground truth states (used for border replacement), shape (B, pred_steps, num_grid_nodes, d_f).
+
+        Returns
+        -------
+        tuple of torch.Tensor
+            (predictions, output_stds)
         """
         prev_prev_state = init_states[:, 0]
         prev_state = init_states[:, 1]
@@ -278,11 +320,21 @@ class ARModel(pl.LightningModule):
 
     def common_step(self, batch):
         """
-        Predict on single batch batch consists of: init_states: (B, 2,
-        num_grid_nodes, d_features) target_states: (B, pred_steps,
-        num_grid_nodes, d_features) forcing_features: (B, pred_steps,
-        num_grid_nodes, d_forcing),
-            where index 0 corresponds to index 1 of init_states
+        Perform a prediction step on a single batch.
+
+        Parameters
+        ----------
+        batch : tuple of torch.Tensor
+            Batch containing (init_states, target_states, forcing_features, batch_times).
+            init_states: (B, 2, num_grid_nodes, d_f)
+            target_states: (B, pred_steps, num_grid_nodes, d_f)
+            forcing_features: (B, pred_steps, num_grid_nodes, d_forcing)
+            batch_times: (B, pred_steps)
+
+        Returns
+        -------
+        tuple of torch.Tensor
+            (prediction, target_states, pred_std, batch_times)
         """
         (init_states, target_states, forcing_features, batch_times) = batch
 
@@ -296,7 +348,17 @@ class ARModel(pl.LightningModule):
 
     def training_step(self, batch):
         """
-        Train on single batch
+        Perform a single training step.
+
+        Parameters
+        ----------
+        batch : tuple of torch.Tensor
+            Batch of training data.
+
+        Returns
+        -------
+        torch.Tensor
+            The computed loss for the batch.
         """
         prediction, target, pred_std, _ = self.common_step(batch)
 
@@ -333,7 +395,14 @@ class ARModel(pl.LightningModule):
     # pylint: disable-next=unused-argument
     def validation_step(self, batch, batch_idx):
         """
-        Run validation on single batch
+        Perform a single validation step.
+
+        Parameters
+        ----------
+        batch : tuple of torch.Tensor
+            Batch of validation data.
+        batch_idx : int
+            Index of the batch.
         """
         prediction, target, pred_std, _ = self.common_step(batch)
 
@@ -384,7 +453,14 @@ class ARModel(pl.LightningModule):
     # pylint: disable-next=unused-argument
     def test_step(self, batch, batch_idx):
         """
-        Run test on single batch
+        Perform a single test step.
+
+        Parameters
+        ----------
+        batch : tuple of torch.Tensor
+            Batch of test data.
+        batch_idx : int
+            Index of the batch.
         """
         # TODO Here batch_times can be used for plotting routines
         prediction, target, pred_std, batch_times = self.common_step(batch)
@@ -465,12 +541,19 @@ class ARModel(pl.LightningModule):
 
     def plot_examples(self, batch, n_examples, split, prediction=None):
         """
-        Plot the first n_examples forecasts from batch
+        Plot the first n_examples forecasts from a batch.
 
-        batch: batch with data to plot corresponding forecasts for n_examples:
-        number of forecasts to plot prediction: (B, pred_steps, num_grid_nodes,
-        d_f), existing prediction.
-            Generate if None.
+        Parameters
+        ----------
+        batch : tuple of torch.Tensor
+            Batch with data to plot.
+        n_examples : int
+            Number of forecasts to plot.
+        split : str
+            Data split ('train', 'val', or 'test').
+        prediction : torch.Tensor, optional
+            Precomputed prediction tensor, shape (B, pred_steps, num_grid_nodes, d_f).
+            If None, it will be generated using common_step.
         """
         if prediction is None:
             prediction, target, _, _ = self.common_step(batch)
@@ -592,14 +675,21 @@ class ARModel(pl.LightningModule):
 
     def create_metric_log_dict(self, metric_tensor, prefix, metric_name):
         """
-        Put together a dict with everything to log for one metric. Also saves
-        plots as pdf and csv if using test prefix.
+        Create a dictionary of metrics and plots for logging.
 
-        metric_tensor: (pred_steps, d_f), metric values per time and variable
-        prefix: string, prefix to use for logging metric_name: string, name of
-        the metric
+        Parameters
+        ----------
+        metric_tensor : torch.Tensor
+            The metric values per lead time and variable, shape (pred_steps, d_f).
+        prefix : str
+            Prefix to use for logging keys (e.g. 'val', 'test').
+        metric_name : str
+            Name of the metric (e.g. 'rmse', 'mae').
 
-        Return: log_dict: dict with everything to log for given metric
+        Returns
+        -------
+        dict
+            Dictionary containing log keys and values (including figures).
         """
         log_dict = {}
         metric_fig = vis.plot_error_map(

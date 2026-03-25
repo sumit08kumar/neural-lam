@@ -42,3 +42,16 @@ repos:
     -   id: mypy
         additional_dependencies: [types-PyYAML, types-Pillow, types-tqdm]
         description: Check for type errors
+
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.7.0
+    hooks:
+      - id: interrogate
+        args: [-vv, --fail-under=80]
+        pass_filenames: false
+
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        additional_dependencies: [toml]

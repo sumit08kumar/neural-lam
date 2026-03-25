@@ -1,3 +1,4 @@
+"""Dataset and DataModule for weather data."""
 # Standard library
 import datetime
 import warnings
@@ -14,28 +15,23 @@ from neural_lam.datastore.base import BaseDatastore
 
 
 class WeatherDataset(torch.utils.data.Dataset):
-    """Dataset class for weather data.
+    """
+    Dataset class for weather data.
 
     This class loads and processes weather data from a given datastore.
 
     Parameters
     ----------
     datastore : BaseDatastore
-        The datastore to load the data from (e.g. mdp).
+        The datastore to load the data from.
     split : str, optional
         The data split to use ("train", "val" or "test"). Default is "train".
     ar_steps : int, optional
         The number of autoregressive steps. Default is 3.
-    num_past_forcing_steps: int, optional
-        Number of past time steps to include in forcing input. If set to i,
-        forcing from times t-i, t-i+1, ..., t-1, t (and potentially beyond,
-        given num_future_forcing_steps) are included as forcing inputs at time t
-        Default is 1.
-    num_future_forcing_steps: int, optional
-        Number of future time steps to include in forcing input. If set to j,
-        forcing from times t, t+1, ..., t+j-1, t+j (and potentially times before
-        t, given num_past_forcing_steps) are included as forcing inputs at time
-        t. Default is 1.
+    num_past_forcing_steps : int, optional
+        Number of past time steps to include in forcing input. Default is 1.
+    num_future_forcing_steps : int, optional
+        Number of future time steps to include in forcing input. Default is 1.
     standardize : bool, optional
         Whether to standardize the data. Default is True.
     """
@@ -116,6 +112,14 @@ class WeatherDataset(torch.utils.data.Dataset):
                 self.da_forcing_std = self.ds_forcing_stats.forcing_std
 
     def __len__(self):
+        """
+        Return the number of samples in the dataset.
+
+        Returns
+        -------
+        int
+            The number of samples.
+        """
         if self.datastore.is_forecast:
             # for now we simply create a single sample for each analysis time
             # and then take the first (2 + ar_steps) forecast times. In
@@ -163,12 +167,12 @@ class WeatherDataset(torch.utils.data.Dataset):
 
     def _slice_state_time(self, da_state, idx, n_steps: int):
         """
-        Produce a time slice of the given dataarray `da_state` (state) starting
-        at `idx` and with `n_steps` steps. An `offset`is calculated based on the
-        `num_past_forcing_steps` class attribute. `Offset` is used to offset the
-        start of the sample, to assert that enough previous time steps are
-        available for the 2 initial states and any corresponding forcings
-        (calculated in `_slice_forcing_time`).
+        Produce a time slice of the given state dataarray.
+
+        An `offset` is calculated based on the `num_past_forcing_steps` class
+        attribute. `Offset` is used to offset the start of the sample, to assert
+        that enough previous time steps are available for the 2 initial states
+        and any corresponding forcings (calculated in `_slice_forcing_time`).
 
         Parameters
         ----------
@@ -225,13 +229,13 @@ class WeatherDataset(torch.utils.data.Dataset):
 
     def _slice_forcing_time(self, da_forcing, idx, n_steps: int):
         """
-        Produce a time slice of the given dataarray `da_forcing` (forcing)
-        starting at `idx` and with `n_steps` steps. An `offset` is calculated
-        based on the `num_past_forcing_steps` class attribute. It is used to
-        offset the start of the sample, to ensure that enough previous time
-        steps are available for the forcing data. The forcing data is windowed
-        around the current autoregressive time step to include the past and
-        future forcings.
+        Produce a time slice of the given forcing dataarray.
+
+        An `offset` is calculated based on the `num_past_forcing_steps` class
+        attribute. It is used to offset the start of the sample, to ensure that
+        enough previous time steps are available for the forcing data. The
+        forcing data is windowed around the current autoregressive time step to
+        include the past and future forcings.
 
         Parameters
         ----------
@@ -602,7 +606,32 @@ class WeatherDataset(torch.utils.data.Dataset):
 
 
 class WeatherDataModule(pl.LightningDataModule):
-    """DataModule for weather data."""
+    """
+    Lightning DataModule for weather data.
+
+    Follows the PyTorch Lightning DataModule standard.
+
+    Parameters
+    ----------
+    datastore : BaseDatastore
+        The datastore to load the data from.
+    ar_steps_train : int, optional
+        Number of autoregressive steps to use during training. Default is 3.
+    ar_steps_eval : int, optional
+        Number of autoregressive steps to use during evaluation. Default is 25.
+    standardize : bool, optional
+        Whether to standardize the data. Default is True.
+    num_past_forcing_steps : int, optional
+        Number of past time steps to include in forcing input. Default is 1.
+    num_future_forcing_steps : int, optional
+        Number of future time steps to include in forcing input. Default is 1.
+    batch_size : int, optional
+        Batch size for data loaders. Default is 4.
+    num_workers : int, optional
+        Number of workers for data loaders. Default is 16.
+    eval_split : str, optional
+        The split to use for evaluation ("val" or "test"). Default is "test".
+    """
 
     def __init__(
         self,
@@ -636,6 +665,14 @@ class WeatherDataModule(pl.LightningDataModule):
             self.multiprocessing_context = "spawn"
 
     def setup(self, stage=None):
+        """
+        Set up the datasets for the different stages of training/evaluation.
+
+        Parameters
+        ----------
+        stage : str, optional
+            The stage to set up ("fit", "test", or None). Default is None.
+        """
         if stage == "fit" or stage is None:
             self.train_dataset = WeatherDataset(
                 datastore=self._datastore,

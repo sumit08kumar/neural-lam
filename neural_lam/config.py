@@ -1,3 +1,4 @@
+"""Configuration handling for Neural-LAM."""
 # Standard library
 import dataclasses
 from pathlib import Path
@@ -150,6 +151,7 @@ class NeuralLAMConfig(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
 
 
 class InvalidConfigError(Exception):
+    """Exception raised for invalid configuration files."""
     pass
 
 

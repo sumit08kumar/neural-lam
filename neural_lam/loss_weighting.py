@@ -1,3 +1,4 @@
+"""Utilities for weighting state features in the loss function."""
 # Local
 from .config import (
     ManualStateFeatureWeighting,
